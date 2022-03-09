@@ -17,6 +17,17 @@ yarn prisma generate
 
 prisma 会在 node_modules/@prisma/clinet 生成操作数据库的 SDK ———— `@prisma/client`
 
+## Dependencies
+- typescript
+- prettier
+- eslint
+- next
+- tailwindcss
+- prisma
+- next-connect
+- swr
+- next-joi
+
 ## Resources
 
 - [Next.js Documentation](https://nextjs.org/docs)
