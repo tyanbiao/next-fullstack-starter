@@ -3,21 +3,22 @@ import nc from 'next-connect'
 import cors from 'cors'
 import * as Boom from '@hapi/boom'
 import config from '../../config'
+import { rejectRestfulJson } from './restful'
 
 export function createNextApiHandler() {
   return nc<NextApiRequest, NextApiResponse>({
     onError(err: any, req, res) {
       if (Boom.isBoom(err)) {
         res.status(err.output.payload.statusCode)
-        res.json({
-          error: err.output.payload.error,
-          message: err.output.payload.message,
-        })
+        res.json(
+          rejectRestfulJson(
+            err.output.payload.statusCode,
+            err.output.payload.message,
+          ),
+        )
       } else {
         res.status(500)
-        res.json({
-          message: 'Unexpected error',
-        })
+        res.json(rejectRestfulJson(500, 'Unexpected Error'))
         console.error(err)
       }
     },

@@ -1,6 +1,7 @@
 import * as Boom from '@hapi/boom'
 import { User } from '@prisma/client'
 import prisma from '../common/lib/prisma'
+import { exclude } from '../utils/prisma.util'
 
 export interface CreateUserDTO {
   uid?: string
@@ -15,56 +16,44 @@ export interface CreateUserDTO {
 }
 
 export interface UpdateUserDTO {
-  id: number
-  role_id: number
+  role_id?: number
   name?: string
-  username: string
-  email: string
-  password: string
+  username?: string
+  email?: string
+  password?: string
   is_active?: boolean
   is_initialized?: boolean
   updated_at?: Date
 }
 
-export async function createUser(dto: CreateUserDTO): Promise<User> {
-  if (dto.uid) {
-    const exists = await prisma.user.findUnique({
-      where: {
-        uid: dto.uid,
-      },
-    })
-    if (exists) {
-      throw Boom.badData('User already exists')
-    }
-  }
-  const existsUsers = await prisma.user.findMany({
-    where: {
-      OR: [
-        {
-          email: dto.email,
-        },
-        {
-          username: dto.username,
-        },
-      ],
-    },
-  })
-  if (existsUsers.length > 0) {
-    throw Boom.badData('User already exists')
-  }
-  return await prisma.user.create({
-    data: dto,
-  })
+export interface ValidateUserDTO {
+  email: string
+  password: string
 }
 
-export function updateUser(dto: UpdateUserDTO): Promise<User> {
-  const { id, ...properties } = dto
-  return prisma.user.update({
+export async function createUser(dto: CreateUserDTO): Promise<User> {
+  // dto.password = await bcrypt.hash(dto.password, 10)
+  try {
+    return await prisma.user.create({
+      data: dto,
+    })
+  } catch (e: any) {
+    throw Boom.badRequest(e.message || 'create failure')
+  }
+}
+
+export async function updateUser(uid: string, dto: UpdateUserDTO) {
+  if (dto.password) {
+    // hash password
+    // dto.password = await bcrypt.hash(dto.password, 10)
+  }
+  const user = await prisma.user.update({
     where: {
-      id,
+      uid,
     },
-    data: properties,
+    data: dto,
   })
+  return exclude(user, 'password', 'id')
 }
 
 export function deleteUser(id: number): Promise<User> {
@@ -84,6 +73,21 @@ export function getUserByEmail(email: string): Promise<User | null> {
       role: true,
     },
   })
+}
+
+export async function getUserByUid(uid: string) {
+  const user = await prisma.user.findUnique({
+    where: {
+      uid,
+    },
+    include: {
+      role: true,
+    },
+  })
+  if (user) {
+    return exclude(user, 'password', 'id')
+  }
+  return user
 }
 
 export async function listUsers() {

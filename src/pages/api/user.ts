@@ -4,6 +4,7 @@ import * as userService from '../../services/user'
 import { NextApiHandler } from 'next'
 import Joi from 'joi'
 import validate from '../../common/middlewares/validate'
+import { resolveRestfulJson } from '../../common/api/restful'
 
 const postSchema = Joi.object({
   uid: Joi.string().guid({ separator: '-' }),
@@ -20,12 +21,12 @@ const postSchema = Joi.object({
 const do_POST: NextApiHandler = async (req, res) => {
   const dto = req.body as CreateUserDTO
   const user = await userService.createUser(dto)
-  res.json(user)
+  res.json(resolveRestfulJson(user))
 }
 
 const do_GET: NextApiHandler = async (req, res) => {
   const users = await userService.listUsers()
-  res.json(users)
+  res.json(resolveRestfulJson(users))
 }
 
 const handler = createNextApiHandler()
